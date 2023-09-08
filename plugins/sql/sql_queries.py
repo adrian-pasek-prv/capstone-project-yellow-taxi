@@ -2,33 +2,33 @@ class SqlQueries:
     create_staging_tables = [
         '''
         CREATE TABLE IF NOT EXISTS staging_trips (
-            vendor_id integer NOT NULL,
+            vendor_id bigint NOT NULL,
             tpep_pickup_datetime timestamp NOT NULL,
             tpep_dropoff_datetime timestamp NOT NULL,
-            passenger_count integer NOT NULL,
-            trip_distance numeric(12,2) NOT NULL,
-            rate_code_id integer NOT NULL,
-            store_and_fwd_flag varchar(1) NOT NULL,
-            pu_location_id integer NOT NULL,
-            do_location_id integer NOT NULL,
-            payment_type integer NOT NULL,
-            fare_amount numeric(12,2) NOT NULL,
-            extra numeric(12,2) NOT NULL,
-            mta_tax numeric(12,2) NOT NULL,
-            tip_amount numeric(12,2) NOT NULL,
-            tolls_amount numeric(12,2) NOT NULL,
-            improvement_surcharge numeric(12,2) NOT NULL,
-            total_amount numeric(12,2) NOT NULL,
-            congestion_surcharge numeric(12,2),
-            airport_fee numeric(12,2)
+            passenger_count bigint NOT NULL,
+            trip_distance float NOT NULL,
+            rate_code_id bigint NOT NULL,
+            store_and_fwd_flag char(10) NOT NULL,
+            pu_location_id bigint NOT NULL,
+            do_location_id bigint NOT NULL,
+            payment_type bigint NOT NULL,
+            fare_amount float NOT NULL,
+            extra float NOT NULL,
+            mta_tax float NOT NULL,
+            tip_amount float NOT NULL,
+            tolls_amount float NOT NULL,
+            improvement_surcharge float NOT NULL,
+            total_amount float NOT NULL,
+            congestion_surcharge float,
+            airport_fee float
             );
         ''',
         '''
         CREATE TABLE IF NOT EXISTS staging_locations (
             location_id integer NOT NULL,
-            borough varchar(30) NOT NULL,
-            zone varchar(30) NOT NULL,
-            service_zone varchar(30) NOT NULL
+            borough varchar(256) NOT NULL,
+            zone varchar(256) NOT NULL,
+            service_zone varchar(256) NOT NULL
             );
         '''
     ]
@@ -36,21 +36,21 @@ class SqlQueries:
         '''
         CREATE TABLE IF NOT EXISTS dim_rate_codes (
             rate_code_id integer NOT NULL,
-            rate_code_desc varchar(30) NOT NULL
+            rate_code_desc varchar(256) NOT NULL
             );
         ''',
         '''
         CREATE TABLE IF NOT EXISTS dim_payment_types (
             payment_type_id integer NOT NULL,
-            payment_type_desc varchar(30) NOT NULL
+            payment_type_desc varchar(256) NOT NULL
             );
         ''',
         '''
         CREATE TABLE IF NOT EXISTS dim_locations (
             location_id integer NOT NULL,
-            borough varchar(30) NOT NULL,
-            zone varchar(30) NOT NULL,
-            service_zone varchar(30) NOT NULL
+            borough varchar(256) NOT NULL,
+            zone varchar(256) NOT NULL,
+            service_zone varchar(256) NOT NULL
             );
         ''',
         '''
@@ -95,20 +95,20 @@ class SqlQueries:
     create_mart_table = [
         '''
         CREATE TABLE IF NOT EXISTS mart_trips_hourly (
-            vendor varchar(30) NOT NULL,
+            vendor varchar(256) NOT NULL,
             pickup_date date NOT NULL,
             pickup_hour integer NOT NULL,
             dropoff_date date NOT NULL,
             dropoff_hour integer NOT NULL,
-            rate_code varchar(30) NOT NULL,
+            rate_code varchar(256) NOT NULL,
             store_and_fwd_flag varchar(1) NOT NULL,
-            pickup_borough varchar(30) NOT NULL,
-            pickup_zone varchar(30) NOT NULL,
-            pickup_service_zone varchar(30) NOT NULL,
-            dropoff_borough varchar(30) NOT NULL,
-            dropoff_zone varchar(30) NOT NULL,
-            dropoff_service_zone varchar(30) NOT NULL,
-            payment_type varchar(30) NOT NULL,
+            pickup_borough varchar(256) NOT NULL,
+            pickup_zone varchar(256) NOT NULL,
+            pickup_service_zone varchar(256) NOT NULL,
+            dropoff_borough varchar(256) NOT NULL,
+            dropoff_zone varchar(256) NOT NULL,
+            dropoff_service_zone varchar(256) NOT NULL,
+            payment_type varchar(256) NOT NULL,
             passenger_count integer NOT NULL,
             trip_distance numeric(30,2) NOT NULL,
             fare_amount numeric(30,2) NOT NULL,
@@ -124,24 +124,27 @@ class SqlQueries:
         '''
         ]
     insert_dim_tables = [
+        {"dim_rate_codes":
+            '''
+                ('1', 'Standard rate'),
+                ('2', 'JFK'),
+                ('3', 'Newark'),
+                ('4', 'Nassau or Westchester'),
+                ('5', 'Negotiated fare'),
+                ('6', 'Group ride');
+            '''
+        },
+        {"dim_payment_types":
         '''
-        INSERT INTO dim_rate_codes VALUES
-            ('1', 'Standard rate'),
-            ('2', 'JFK'),
-            ('3', 'Newark'),
-            ('4', 'Nassau or Westchester'),
-            ('5', 'Negotiated fare'),
-            ('6', 'Group ride');
-        ''',
-        '''
-        INSERT INTO dim_payment_types VALUES
             ('1', 'Credit card'),
             ('2', 'Cash'),
             ('3', 'No charge'),
             ('4', 'Dispute'),
             ('5', 'Unknown'),
             ('6', 'Voided trip');
-        ''',
+        '''
+        },
+        {"dim_locations":
         '''
         SELECT
             locationid
@@ -149,7 +152,9 @@ class SqlQueries:
             ,zone
             ,service_zone
         FROM staging_locations;
-        ''',
+        '''
+        },
+        {"dim_time":
         '''
         SELECT DISTINCT
             tpep_pickup_datetime
@@ -175,6 +180,7 @@ class SqlQueries:
             ,extract(dayofweek from tpep_dropoff_datetime)
         FROM staging_trips;
         '''
+        }
     ]
     insert_fact_table = [
         '''

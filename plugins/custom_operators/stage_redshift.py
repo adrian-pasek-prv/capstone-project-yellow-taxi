@@ -5,23 +5,13 @@ from airflow.models import BaseOperator
 class StageToRedshiftOperator(BaseOperator):
     # What field will be templateable, in what field can I use Airflow context variables
     template_fields = ("s3_key",)
-    copy_sql = """
-        COPY {}
-        FROM '{}'
-        ACCESS_KEY_ID '{}'
-        SECRET_ACCESS_KEY '{}'
-        IGNOREHEADER {}
-        JSON '{}'
-        REGION '{}'
-    """
-
+    
     def __init__(self,
                  redshift_conn_id: str = "",
                  aws_credentials_id: str = "",
                  table_name: str = "",
                  s3_bucket: str = "",
                  s3_key: str = "",
-                 aws_region: str = "",
                  format: str = "parquet",
                  ignore_headers: int = 1,
                  delimiter: str = ",",
@@ -34,7 +24,6 @@ class StageToRedshiftOperator(BaseOperator):
         self.table_name = table_name
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
-        self.aws_region = aws_region
         self.format = format
         self.ignore_headers = ignore_headers
         self.delimiter = delimiter
@@ -48,7 +37,10 @@ class StageToRedshiftOperator(BaseOperator):
             opt_params = ''
         elif self.format == "csv":
             format = 'CSV'
-            opt_params = f"DELIMITER AS '{self.delimiter}'"
+            opt_params = f"""
+                IGNOREHEADER {self.ignore_headers}
+                DELIMITER AS '{self.delimiter}'
+            """
         else:
             raise NotImplementedError("Format not implemented")
         
@@ -62,11 +54,9 @@ class StageToRedshiftOperator(BaseOperator):
         
         copy_stmt = f"""
             COPY {self.table_name}
-            FROM {s3_path}
-            ACCESS_KEY_ID {credentials.access_key}
-            SECRET_ACCESS_KEY {credentials.secret_key}
-            IGNOREHEADER {self.ignore_headers}
-            REGION {self.aws_region}
+            FROM '{s3_path}'
+            ACCESS_KEY_ID '{credentials.access_key}'
+            SECRET_ACCESS_KEY '{credentials.secret_key}'
             FORMAT {format}
             {opt_params}
         """
