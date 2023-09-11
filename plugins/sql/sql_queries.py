@@ -30,6 +30,18 @@ class SqlQueries:
             zone varchar(256) NOT NULL,
             service_zone varchar(256) NOT NULL
             );
+        ''',
+        '''
+        CREATE TABLE IF NOT EXISTS staging_rate_codes (
+            rate_code_id integer NOT NULL,
+            rate_code_desc varchar(256) NOT NULL
+            );
+        ''',
+        '''
+        CREATE TABLE IF NOT EXISTS staging_payment_types (
+            payment_type_id integer NOT NULL,
+            payment_type_desc varchar(256) NOT NULL
+            );
         '''
     ]
     create_dim_tables = [
@@ -66,8 +78,7 @@ class SqlQueries:
         );
         '''
     ]
-    create_fact_table = [
-        '''
+    create_fact_table = '''
         CREATE TABLE IF NOT EXISTS fact_trips (
             fct_id varchar(256) NOT NULL,
             vendor_id integer NOT NULL,
@@ -91,9 +102,7 @@ class SqlQueries:
             airport_fee numeric(12,2)
         );
         '''
-    ]
-    create_mart_table = [
-        '''
+    create_mart_table = '''
         CREATE TABLE IF NOT EXISTS mart_trips_hourly (
             vendor varchar(256) NOT NULL,
             pickup_date date NOT NULL,
@@ -122,39 +131,34 @@ class SqlQueries:
             airport_fee numeric(30,2)
         );
         '''
-        ]
-    insert_dim_tables = [
-        {"dim_rate_codes":
+    insert_dim_tables = {
+        "dim_rate_codes":
             '''
-                ('1', 'Standard rate'),
-                ('2', 'JFK'),
-                ('3', 'Newark'),
-                ('4', 'Nassau or Westchester'),
-                ('5', 'Negotiated fare'),
-                ('6', 'Group ride');
+                SELECT
+                    rate_code_id
+                    ,rate_code_desc
+                FROM staging_rate_codes;
             '''
-        },
-        {"dim_payment_types":
+        ,
+        "dim_payment_types":
         '''
-            ('1', 'Credit card'),
-            ('2', 'Cash'),
-            ('3', 'No charge'),
-            ('4', 'Dispute'),
-            ('5', 'Unknown'),
-            ('6', 'Voided trip');
+            SELECT
+                payment_type_id
+                ,payment_type_desc
+            FROM staging_payment_types;
         '''
-        },
-        {"dim_locations":
+        ,
+        "dim_locations":
         '''
         SELECT
-            locationid
+            location_id
             ,borough
             ,zone
             ,service_zone
         FROM staging_locations;
         '''
-        },
-        {"dim_time":
+        ,
+        "dim_time":
         '''
         SELECT DISTINCT
             tpep_pickup_datetime
@@ -180,10 +184,10 @@ class SqlQueries:
             ,extract(dayofweek from tpep_dropoff_datetime)
         FROM staging_trips;
         '''
-        }
-    ]
-    insert_fact_table = [
-        '''
+        
+    }
+    
+    insert_fact_table = '''
         SELECT
             md5(vendor_id || tpep_pickup_datetime || pu_location_id || do_location_id)
             ,vendor_id
@@ -205,11 +209,11 @@ class SqlQueries:
             ,total_amount
             ,congestion_surcharge
             ,airport_fee
-        FROM staging_trips;
+        FROM staging_trips
+        WHERE tpep_pickup_datetime >= '{interval_start}'
+        AND tpep_dropoff_datetime < '{interval_end}';
         '''
-    ]
-    insert_mart_table = [
-        '''
+    insert_mart_table = """
         SELECT
             case
                 when fact_trips.vendor_id = '1' then 'Creative Mobile Technologies, LCC'
@@ -224,29 +228,30 @@ class SqlQueries:
             ,pu.borough
             ,pu.zone
             ,pu.service_zone
-            ,do.borough
-            ,do.zone
-            ,do.service_zone
+            ,dof.borough
+            ,dof.zone
+            ,dof.service_zone
             ,dim_payment_types.payment_type_desc
             ,sum(fact_trips.passenger_count)
             ,sum(fact_trips.trip_distance)
             ,sum(fact_trips.fare_amount)
-            ,sum(fact_trips.extra)
-            ,sum(fact_trips.mta_tax)
+            ,sum(fact_trips.extra_amount)
+            ,sum(fact_trips.mta_tax_amount)
             ,sum(fact_trips.tip_amount)
             ,sum(fact_trips.tolls_amount)
-            ,sum(fact_trips.improvement_surcharge)
+            ,sum(fact_trips.improvement_surcharge_amount)
             ,sum(fact_trips.total_amount)
-            ,sum(fact_trips.congestion_surcharge)
+            ,sum(fact_trips.congestion_surcharge_amount)
             ,sum(fact_trips.airport_fee)
         FROM fact_trips
-        LEFT JOIN dim_rate_codes ON fact_trips.rate_code_id = dim_rate_codes.rate_code_id
-        LEFT JOIN dim_payment_types ON fact_trips.payment_type = dim_payment_types.payment_type_id
-        LEFT JOIN dim_locations pu ON fact_trips.pickup_location_id = pu.location_id
-        LEFT JOIN dim_locations do ON fact_trips.dropoff_location_id = do.location_id
-        LEFT JOIN dim_time pu_time ON fact_trips.pickup_timestamp = pu_time.timestamp
-        LEFT JOIN dim_time do_time ON fact_trips.dropoff_timestamp = do_time.timestamp
+        JOIN dim_rate_codes ON fact_trips.rate_code_id = dim_rate_codes.rate_code_id
+        JOIN dim_payment_types ON fact_trips.payment_type = dim_payment_types.payment_type_id
+        JOIN dim_locations pu ON fact_trips.pickup_location_id = pu.location_id
+        JOIN dim_locations dof ON fact_trips.dropoff_location_id = dof.location_id
+        JOIN dim_time pu_time ON fact_trips.pickup_timestamp = pu_time.timestamp
+        JOIN dim_time do_time ON fact_trips.dropoff_timestamp = do_time.timestamp
+        WHERE fact_trips.pickup_timestamp >= '{interval_start}'
+        AND fact_trips.dropoff_timestamp < '{interval_end}'
         GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14;
-        '''
-    ]
+        """
     
