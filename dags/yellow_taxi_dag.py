@@ -14,12 +14,12 @@ default_args = {
     'owner': 'adrian.pasek',
     'depends_on_past': False,
     'retries': 3,
-    'retry_delay': datetime.timedelta(minutes=5),
+    'retry_delay': datetime.timedelta(minutes=2),
     'catchup': False,
     'email_on_retry': False
 }
 
-@dag(start_date=datetime.datetime(2018, 1, 1, 0, 0, 0, 0),
+@dag(start_date=datetime.datetime(2019, 1, 1, 0, 0, 0, 0),
     end_date=datetime.datetime(2022, 12, 1, 0, 0, 0, 0),
     default_args=default_args,
     schedule_interval='@monthly',

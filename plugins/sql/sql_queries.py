@@ -2,131 +2,131 @@ class SqlQueries:
     create_staging_tables = [
         '''
         CREATE TABLE IF NOT EXISTS staging_trips (
-            vendor_id bigint NOT NULL,
-            tpep_pickup_datetime timestamp NOT NULL,
-            tpep_dropoff_datetime timestamp NOT NULL,
-            passenger_count bigint NOT NULL,
-            trip_distance float NOT NULL,
-            rate_code_id bigint NOT NULL,
-            store_and_fwd_flag char(10) NOT NULL,
-            pu_location_id bigint NOT NULL,
-            do_location_id bigint NOT NULL,
-            payment_type bigint NOT NULL,
-            fare_amount float NOT NULL,
-            extra float NOT NULL,
-            mta_tax float NOT NULL,
-            tip_amount float NOT NULL,
-            tolls_amount float NOT NULL,
-            improvement_surcharge float NOT NULL,
-            total_amount float NOT NULL,
+            vendor_id bigint,
+            tpep_pickup_datetime timestamp,
+            tpep_dropoff_datetime timestamp,
+            passenger_count float,
+            trip_distance float,
+            rate_code_id float,
+            store_and_fwd_flag char(10),
+            pu_location_id bigint,
+            do_location_id bigint,
+            payment_type bigint,
+            fare_amount float,
+            extra float,
+            mta_tax float,
+            tip_amount float,
+            tolls_amount float,
+            improvement_surcharge float,
+            total_amount float,
             congestion_surcharge float,
             airport_fee float
             );
         ''',
         '''
         CREATE TABLE IF NOT EXISTS staging_locations (
-            location_id integer NOT NULL,
-            borough varchar(256) NOT NULL,
-            zone varchar(256) NOT NULL,
-            service_zone varchar(256) NOT NULL
+            location_id integer,
+            borough varchar(256),
+            zone varchar(256),
+            service_zone varchar(256)
             );
         ''',
         '''
         CREATE TABLE IF NOT EXISTS staging_rate_codes (
-            rate_code_id integer NOT NULL,
-            rate_code_desc varchar(256) NOT NULL
+            rate_code_id integer,
+            rate_code_desc varchar(256)
             );
         ''',
         '''
         CREATE TABLE IF NOT EXISTS staging_payment_types (
-            payment_type_id integer NOT NULL,
-            payment_type_desc varchar(256) NOT NULL
+            payment_type_id integer,
+            payment_type_desc varchar(256)
             );
         '''
     ]
     create_dim_tables = [
         '''
         CREATE TABLE IF NOT EXISTS dim_rate_codes (
-            rate_code_id integer NOT NULL,
-            rate_code_desc varchar(256) NOT NULL
+            rate_code_id integer,
+            rate_code_desc varchar(256)
             );
         ''',
         '''
         CREATE TABLE IF NOT EXISTS dim_payment_types (
-            payment_type_id integer NOT NULL,
-            payment_type_desc varchar(256) NOT NULL
+            payment_type_id integer,
+            payment_type_desc varchar(256)
             );
         ''',
         '''
         CREATE TABLE IF NOT EXISTS dim_locations (
-            location_id integer NOT NULL,
-            borough varchar(256) NOT NULL,
-            zone varchar(256) NOT NULL,
-            service_zone varchar(256) NOT NULL
+            location_id integer,
+            borough varchar(256),
+            zone varchar(256),
+            service_zone varchar(256)
             );
         ''',
         '''
         CREATE TABLE IF NOT EXISTS dim_time (
-            timestamp timestamp NOT NULL,
-            hour integer NOT NULL,
-            date date NOT NULL,
-            day integer NOT NULL,
-            week integer NOT NULL,
-            month integer NOT NULL,
-            year integer NOT NULL,
-            weekday varchar(30) NOT NULL
+            timestamp timestamp,
+            hour integer,
+            date date,
+            day integer,
+            week integer,
+            month integer,
+            year integer,
+            weekday varchar(30)
         );
         '''
     ]
     create_fact_table = '''
         CREATE TABLE IF NOT EXISTS fact_trips (
-            fct_id varchar(256) NOT NULL,
-            vendor_id integer NOT NULL,
-            pickup_timestamp timestamp NOT NULL,
-            dropoff_timestamp timestamp NOT NULL,
-            passenger_count integer NOT NULL,
-            trip_distance numeric(12,2) NOT NULL,
-            rate_code_id integer NOT NULL,
-            store_and_fwd_flag varchar(1) NOT NULL,
-            pickup_location_id integer NOT NULL,
-            dropoff_location_id integer NOT NULL,
-            payment_type integer NOT NULL,
-            fare_amount numeric(12,2) NOT NULL,
-            extra_amount numeric(12,2) NOT NULL,
-            mta_tax_amount numeric(12,2) NOT NULL,
-            tip_amount numeric(12,2) NOT NULL,
-            tolls_amount numeric(12,2) NOT NULL,
-            improvement_surcharge_amount numeric(12,2) NOT NULL,
-            total_amount numeric(12,2) NOT NULL,
+            fct_id varchar(256),
+            vendor_id integer,
+            pickup_timestamp timestamp,
+            dropoff_timestamp timestamp,
+            passenger_count integer,
+            trip_distance numeric(12,2),
+            rate_code_id integer,
+            store_and_fwd_flag varchar(1),
+            pickup_location_id integer,
+            dropoff_location_id integer,
+            payment_type integer,
+            fare_amount numeric(12,2),
+            extra_amount numeric(12,2),
+            mta_tax_amount numeric(12,2),
+            tip_amount numeric(12,2),
+            tolls_amount numeric(12,2),
+            improvement_surcharge_amount numeric(12,2),
+            total_amount numeric(12,2),
             congestion_surcharge_amount numeric(12,2),
             airport_fee numeric(12,2)
         );
         '''
     create_mart_table = '''
         CREATE TABLE IF NOT EXISTS mart_trips_hourly (
-            vendor varchar(256) NOT NULL,
-            pickup_date date NOT NULL,
-            pickup_hour integer NOT NULL,
-            dropoff_date date NOT NULL,
-            dropoff_hour integer NOT NULL,
-            rate_code varchar(256) NOT NULL,
-            store_and_fwd_flag varchar(1) NOT NULL,
-            pickup_borough varchar(256) NOT NULL,
-            pickup_zone varchar(256) NOT NULL,
-            pickup_service_zone varchar(256) NOT NULL,
-            dropoff_borough varchar(256) NOT NULL,
-            dropoff_zone varchar(256) NOT NULL,
-            dropoff_service_zone varchar(256) NOT NULL,
-            payment_type varchar(256) NOT NULL,
-            passenger_count integer NOT NULL,
-            trip_distance numeric(30,2) NOT NULL,
-            fare_amount numeric(30,2) NOT NULL,
-            extra_amount numeric(30,2) NOT NULL,
-            mta_tax_amount numeric(30,2) NOT NULL,
-            tip_amount numeric(30,2) NOT NULL,
-            tolls_amount numeric(30,2) NOT NULL,
-            improvement_surcharge_amount numeric(30,2) NOT NULL,
-            total_amount numeric(30,2) NOT NULL,
+            vendor varchar(256),
+            pickup_date date,
+            pickup_hour integer,
+            dropoff_date date,
+            dropoff_hour integer,
+            rate_code varchar(256),
+            store_and_fwd_flag varchar(1),
+            pickup_borough varchar(256),
+            pickup_zone varchar(256),
+            pickup_service_zone varchar(256),
+            dropoff_borough varchar(256),
+            dropoff_zone varchar(256),
+            dropoff_service_zone varchar(256),
+            payment_type varchar(256),
+            passenger_count integer,
+            trip_distance numeric(30,2),
+            fare_amount numeric(30,2),
+            extra_amount numeric(30,2),
+            mta_tax_amount numeric(30,2),
+            tip_amount numeric(30,2),
+            tolls_amount numeric(30,2),
+            improvement_surcharge_amount numeric(30,2),
+            total_amount numeric(30,2),
             congestion_surcharge_amount numeric(30,2),
             airport_fee numeric(30,2)
         );
@@ -189,7 +189,7 @@ class SqlQueries:
     
     insert_fact_table = '''
         SELECT
-            md5(vendor_id || tpep_pickup_datetime || pu_location_id || do_location_id)
+            md5(vendor_id || tpep_pickup_datetime || tpep_dropoff_datetime || pu_location_id || do_location_id || total_amount)
             ,vendor_id
             ,tpep_pickup_datetime
             ,tpep_dropoff_datetime
@@ -218,6 +218,7 @@ class SqlQueries:
             case
                 when fact_trips.vendor_id = '1' then 'Creative Mobile Technologies, LCC'
                 when fact_trips.vendor_id = '2' then 'VeriFone Inc.'
+            else 'Unknown'
              end
             ,pu_time.date
             ,pu_time.hour
