@@ -68,8 +68,8 @@ class SqlQueries:
         '''
         CREATE TABLE IF NOT EXISTS dim_time (
             timestamp timestamp,
-            hour integer,
             date date,
+            hour integer,
             day integer,
             week integer,
             month integer,
@@ -91,6 +91,7 @@ class SqlQueries:
             pickup_location_id integer,
             dropoff_location_id integer,
             payment_type integer,
+            if_refund boolean,
             fare_amount numeric(12,2),
             extra_amount numeric(12,2),
             mta_tax_amount numeric(12,2),
@@ -118,6 +119,7 @@ class SqlQueries:
             dropoff_zone varchar(256),
             dropoff_service_zone varchar(256),
             payment_type varchar(256),
+            if_refund boolean,
             passenger_count integer,
             trip_distance numeric(30,2),
             fare_amount numeric(30,2),
@@ -160,36 +162,40 @@ class SqlQueries:
         ,
         "dim_time":
         '''
-        SELECT DISTINCT
-            tpep_pickup_datetime
-            ,extract(hour from tpep_pickup_datetime)
-            ,date_trunc('day', tpep_pickup_datetime)
-            ,extract(day from tpep_pickup_datetime)
-            ,extract(week from tpep_pickup_datetime)
-            ,extract(month from tpep_pickup_datetime)
-            ,extract(year from tpep_pickup_datetime)
-            ,extract(dayofweek from tpep_pickup_datetime)
-        FROM staging_trips
-        
-        UNION
-        
-        SELECT DISTINCT
-            tpep_dropoff_datetime
-            ,extract(hour from tpep_dropoff_datetime)
-            ,date_trunc('day', tpep_dropoff_datetime)
-            ,extract(day from tpep_dropoff_datetime)
-            ,extract(week from tpep_dropoff_datetime)
-            ,extract(month from tpep_dropoff_datetime)
-            ,extract(year from tpep_dropoff_datetime)
-            ,extract(dayofweek from tpep_dropoff_datetime)
-        FROM staging_trips;
+            SELECT DISTINCT
+                tpep_pickup_datetime
+                ,date(tpep_pickup_datetime)
+                ,extract(hour from tpep_pickup_datetime)
+                ,extract(day from tpep_pickup_datetime)
+                ,extract(week from tpep_pickup_datetime)
+                ,extract(month from tpep_pickup_datetime)
+                ,extract(year from tpep_pickup_datetime)
+                ,extract(dayofweek from tpep_pickup_datetime)
+            FROM staging_trips
+            
+            UNION
+            
+            SELECT DISTINCT
+                tpep_dropoff_datetime
+                ,date(tpep_dropoff_datetime)
+                ,extract(hour from tpep_dropoff_datetime)
+                ,extract(day from tpep_dropoff_datetime)
+                ,extract(week from tpep_dropoff_datetime)
+                ,extract(month from tpep_dropoff_datetime)
+                ,extract(year from tpep_dropoff_datetime)
+                ,extract(dayofweek from tpep_dropoff_datetime)
+            FROM staging_trips;
         '''
         
     }
     
     insert_fact_table = '''
         SELECT
-            md5(vendor_id || tpep_pickup_datetime || tpep_dropoff_datetime || pu_location_id || do_location_id || total_amount)
+            md5(vendor_id || tpep_pickup_datetime || tpep_dropoff_datetime || pu_location_id || do_location_id 
+                || total_amount || passenger_count || rate_code_id || store_and_fwd_flag || payment_type || case
+                when total_amount < 0 then 1
+                else 0
+            end)
             ,vendor_id
             ,tpep_pickup_datetime
             ,tpep_dropoff_datetime
@@ -200,6 +206,10 @@ class SqlQueries:
             ,pu_location_id
             ,do_location_id
             ,payment_type
+            ,case
+                when total_amount < 0 then 1
+                else 0
+            end
             ,fare_amount
             ,extra
             ,mta_tax
@@ -233,6 +243,7 @@ class SqlQueries:
             ,dof.zone
             ,dof.service_zone
             ,dim_payment_types.payment_type_desc
+            ,fact_trips.if_refund
             ,sum(fact_trips.passenger_count)
             ,sum(fact_trips.trip_distance)
             ,sum(fact_trips.fare_amount)
@@ -253,6 +264,6 @@ class SqlQueries:
         JOIN dim_time do_time ON fact_trips.dropoff_timestamp = do_time.timestamp
         WHERE fact_trips.pickup_timestamp >= '{interval_start}'
         AND fact_trips.dropoff_timestamp < '{interval_end}'
-        GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14;
+        GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15;
         """
     

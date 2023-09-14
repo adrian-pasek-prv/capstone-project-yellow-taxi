@@ -61,7 +61,7 @@ def yellow_taxi_dag():
             s3_bucket="capstone-project-taxi-data",
             s3_key="yellow_trip/{{ data_interval_start.year }}/{{ data_interval_start.month }}/",
             format="parquet",
-            overwrite=False,
+            overwrite=True,
         )
         
         stage_locations = StageToRedshiftOperator(
@@ -133,7 +133,7 @@ def yellow_taxi_dag():
             redshift_conn_id="redshift",
             table_name="dim_time",
             sql=SqlQueries.insert_dim_tables['dim_time'],
-            append_only=True
+            append_only=False
         )
     
     load_fact_trips = LoadFactMartOperator(
