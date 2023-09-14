@@ -190,7 +190,7 @@ class SqlQueries:
     }
     
     insert_fact_table = '''
-        SELECT
+        SELECT DISTINCT
             md5(vendor_id || tpep_pickup_datetime || tpep_dropoff_datetime || pu_location_id || do_location_id 
                 || total_amount || trip_distance || passenger_count || rate_code_id || store_and_fwd_flag || payment_type || case
                 when total_amount < 0 then 1
