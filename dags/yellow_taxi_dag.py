@@ -7,6 +7,7 @@ from airflow.operators.postgres_operator import PostgresOperator
 from custom_operators.stage_redshift import StageToRedshiftOperator
 from custom_operators.load_fact_mart import LoadFactMartOperator
 from custom_operators.load_dimension import LoadDimensionOperator
+from custom_operators.data_quality import DataQualityOperator
 
 from sql.sql_queries import SqlQueries
 
@@ -150,7 +151,16 @@ def yellow_taxi_dag():
         sql=SqlQueries.insert_mart_table.format(interval_start="{{ data_interval_start.to_datetime_string() }}", interval_end="{{ data_interval_end.to_datetime_string() }}")
     )
     
-    create_tables >> stage_to_redshift >> load_dim_tables >> load_fact_trips >> load_mart_trips_hourly
+    run_data_quality_checks = DataQualityOperator(
+        task_id="run_data_quality_checks",
+        redshift_conn_id="redshift",
+        has_rows_tables=["staging_trips", "staging_locations", "staging_payment_types", "staging_rate_codes"],
+        is_not_null_table_col_map={"fact_trips": "fct_id", "dim_locations": "location_id", "dim_payment_types": "payment_type_id", "dim_rate_codes": "rate_code_id"},
+        is_unique_table_col_map={"fact_trips": "fct_id"}
+    )
+    
+    
+    create_tables >> stage_to_redshift >> load_dim_tables >> load_fact_trips >> load_mart_trips_hourly >> run_data_quality_checks
     
 yellow_taxi_dag()
     

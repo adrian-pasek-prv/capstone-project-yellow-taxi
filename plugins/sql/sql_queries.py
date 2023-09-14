@@ -192,7 +192,7 @@ class SqlQueries:
     insert_fact_table = '''
         SELECT
             md5(vendor_id || tpep_pickup_datetime || tpep_dropoff_datetime || pu_location_id || do_location_id 
-                || total_amount || passenger_count || rate_code_id || store_and_fwd_flag || payment_type || case
+                || total_amount || trip_distance || passenger_count || rate_code_id || store_and_fwd_flag || payment_type || case
                 when total_amount < 0 then 1
                 else 0
             end)
@@ -221,13 +221,16 @@ class SqlQueries:
             ,airport_fee
         FROM staging_trips
         WHERE tpep_pickup_datetime >= '{interval_start}'
-        AND tpep_dropoff_datetime < '{interval_end}';
+        AND tpep_dropoff_datetime < '{interval_end}'
+        AND passenger_count is not null
+        and rate_code_id is not null
+        and store_and_fwd_flag is not null;
         '''
     insert_mart_table = """
         SELECT
             case
-                when fact_trips.vendor_id = '1' then 'Creative Mobile Technologies, LCC'
-                when fact_trips.vendor_id = '2' then 'VeriFone Inc.'
+                when fact_trips.vendor_id = 1 then 'Creative Mobile Technologies, LCC'
+                when fact_trips.vendor_id = 2 then 'VeriFone Inc.'
             else 'Unknown'
              end
             ,pu_time.date
