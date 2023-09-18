@@ -1,7 +1,7 @@
 # New York's Yellow Taxi Trip Records Data Engineering Project
 
 ## Project Summary
-The project is made for the purpose of completing Udacity Data Engineering Nanodegree program. The main idea was to create an ELT pipeline that will provide an analytic database for popular New York's yellow taxi trips. The source of data comes from nyc.gov website and is stored as monthly parquet files. Depending on the month, each parquet file is about 100MB and contains nearly 10M records. The date range of the dataset spans from January 2019 to December 2022. The dataset is made in normalized form where most of the dimensions are indicated by numerical ids - a data dictionary in the form of CSV files is provided and it will serve as a foundation for dimension tables. More information about the dataset can be found [here](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) and also in [explore.ipynb](https://github.com/adrian-pasek-prv/capstone-project-yellow-taxi/blob/main/explore.ipynb) Jupyter notebook file.
+The purpose of the project is to construct an analytical database for New York's yellow taxi trips. The main idea is to create an ELT pipeline that will ingest, process and transform raw data into analytical tables. The source of data comes from nyc.gov website and is stored as monthly parquet files. Depending on the month, each parquet file is about 100MB and contains nearly 10M records. The date range of the dataset spans from January 2019 to December 2022. The dataset is made in normalized form where most of the dimensions are indicated by numerical ids - a data dictionary in the form of CSV files is provided and it will serve as a foundation for dimension tables. More information about the dataset can be found [here](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) and also in [explore.ipynb](https://github.com/adrian-pasek-prv/capstone-project-yellow-taxi/blob/main/explore.ipynb) Jupyter notebook file.
 
 ## Data Model
 This project uses the data modeling concept of [star schema](https://www.databricks.com/glossary/star-schema) where a fact table that represents records of yellow taxi trips is surrounded by dimension tables that contain descriptive information. Dimension tables where constructed in accordance with [data dictionary](https://www.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_yellow.pdf) that was provided by nyc.gov
@@ -19,9 +19,9 @@ This project uses the data modeling concept of [star schema](https://www.databri
 
 # Data Pipeline
 Data pipeline for this project is defined and maintained in Apache Airflow. It includes the main DAG that orchestrates a set of tasks that perform ELT actions on a monthly basis:
-* create_tables - group of tasks that create tables used in the downstream actions
-* stage_to_redshift - group of tasks that stage source data stored on S3 to Redshift cluster using a custom StageToRedshiftOperator that performs COPY operations
-* load_dim_tables - group of tasks that populate dimension tables
-* load_fact_trips - inserts trip records into a fact table
-* load_mart_tables - joins fact and dimension tables to provide descriptive information and aggregates the data to hourly level
-* run_data_quality_checks - 
+* **create_tables** - group of tasks that create tables used in the downstream actions
+* **stage_to_redshift** - group of tasks that stage source data stored on S3 to Redshift cluster using a custom **StageToRedshiftOperator** that performs COPY operations
+* **load_dim_tables** - group of tasks that populate dimension tables
+* **load_fact_trips** - inserts trip records into a fact table
+* **load_mart_tables** - joins fact and dimension tables to provide descriptive information and aggregates the data to hourly level
+* **run_data_quality_checks** - 
