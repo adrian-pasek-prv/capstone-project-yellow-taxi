@@ -17,11 +17,63 @@ This project uses the data modeling concept of [star schema](https://www.databri
 * Amazon Redshift - analytical data warehouse that will ingest the data sources from S3 and do the heavy-lifting of processing and transforming the data. Amazon Redshift is the perfect choice when working with huge volume of data as it enables to scale processing power to suit our needs.
 * Apache Airflow - orchestration tool that will help us to define and execute a workflow for ELT processes. It provides many plug-and-play operators that can be used with AWS services. It also includes scheduling and monitoring features that will enable us to ensure satisfactory data delivery to our stakeholders
 
-# Data Pipeline
+## Data Pipeline
 Data pipeline for this project is defined and maintained in Apache Airflow. It includes the main DAG that orchestrates a set of tasks that perform ELT actions on a monthly basis:
+![image](https://github.com/adrian-pasek-prv/capstone-project-yellow-taxi/assets/99073144/01299c61-f559-4118-8fea-1fcf4f2f81b3)
+
 * **create_tables** - group of tasks that create tables used in the downstream actions
 * **stage_to_redshift** - group of tasks that stage source data stored on S3 to Redshift cluster using a custom **StageToRedshiftOperator** that performs COPY operations
 * **load_dim_tables** - group of tasks that populate dimension tables
 * **load_fact_trips** - inserts trip records into a fact table
+ * **run_data_quality_checks** - performs data quality checks such as if staging tables were loaded correctly, if there are null values, if fct_id is unique
 * **load_mart_tables** - joins fact and dimension tables to provide descriptive information and aggregates the data to hourly level
-* **run_data_quality_checks** - 
+
+## Questions
+What would I do if encountered following scenarios:
+* If the data was increased by 100x.
+  * First of all, I would contact the source data owner to partition the data to the level that is higher than monthly (daily, hourly). Since Redshift is MPP data warehouse it would work more efficiently if provided with more partitions than having to process large monthly parquet files. Additionally, Redshift cluster can be scaled up and down to meet our requirements
+* If the pipelines were run on a daily basis by 7am.
+  * Data source owner would first need to provide parquet files partitioned by hour, after that requirement is met, Airflow can easily set up schedule to daily 7AM job using CRON expression.
+* If the database needed to be accessed by 100+ people.
+  * Amazon Redshift has a Concurrency Scaling feature that allows for scaling a number of concurrent users and queries.
+ 
+## Example Business Questions Answered
+Focusing on the year 2019, please answer following questions:
+* What are the top 5 traffic hours in New York when it comes to yellow taxi usage?
+```
+  select
+    pickup_hour,
+    count(*) as started_trips
+  from mart_trips_hourly
+  where extract('year' from pickup_date) = 2019
+  group by 1
+  order by count(*) desc
+  limit 5
+```
+![image](https://github.com/adrian-pasek-prv/capstone-project-yellow-taxi/assets/99073144/3b85e5fc-8244-4697-bcf7-cac4f1402527)
+
+
+* What is the average trip distance covered?
+```
+select
+    avg(trip_distance)
+from mart_trips_hourly
+where extract('year' from pickup_date) = 2019
+```
+![image](https://github.com/adrian-pasek-prv/capstone-project-yellow-taxi/assets/99073144/7abbd1a7-5d86-4477-8df8-14a8a78489b8)
+
+* What is the most popular pickup zone?
+```
+  select
+    pickup_zone,
+    count(*) as started_trips
+  from mart_trips_hourly
+  where extract('year' from pickup_date) = 2019
+  group by 1
+  order by count(*) desc
+  limit 1
+```
+![image](https://github.com/adrian-pasek-prv/capstone-project-yellow-taxi/assets/99073144/ee1ef112-58e9-4a84-8533-90c88d98a7bf)
+
+
+
